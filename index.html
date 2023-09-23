@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TokenM</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body>
+    <div class="container">
+        <button id="connect-wallet-button" class="btn btn-primary">Connect Wallet</button>
+        <h1 class="text-center">TokenM</h1>
+        <div class="row">
+            <div class="col-md-6">
+                <h2>TokenM Balance</h2>
+                <p id="tokenm-balance">0</p>
+            </div>
+            <div class="col-md-6">
+                <h2>CoinM Balance</h2>
+                <p id="coinm-balance">0</p>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-6">
+                <h2>Purchase CoinM</h2>
+                <form>
+                    <div class="form-group">
+                        <label for="tokenm-amount">TokenM Amount</label>
+                        <input type="number" class="form-control" id="tokenm-amount" placeholder="Enter TokenM amount">
+                    </div>
+                    <button type="submit" class="btn btn-primary">Purchase CoinM</button>
+                </form>
+            </div>
+            <div class="col-md-6">
+                <h2>Referral Program</h2>
+                <form>
+                    <div class="form-group">
+                        <label for="referral-code">Referral Code</label>
+                        <input type="text" class="form-control" id="referral-code" placeholder="Enter Referral Code">
+                    </div>
+                    <button type="submit" class="btn btn-primary">Claim Referral Benefits</button>
+                </form>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-12">
+                <h2>Transactions</h2>
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th scope="col">Type</th>
+                            <th scope="col">Amount</th>
+                            <th scope="col">Date</th>
+                        </tr>
+                    </thead>
+                    <tbody id="transactions-table">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script>
+
+        // Connect to the Web3 provider
+            const connectWalletButton = document.querySelector('#connect-wallet-button');
+
+            connectWalletButton.addEventListener('click', async () => {
+            await web3Provider.connect();
+
+            // Update the UI with the user's TokenM and CoinM balances
+            updateBalances();
+
+            // Update the UI with the user's transactions
+            updateTransactions();
+                });
+
+        // Claim referral benefits
+        async function claimReferralBenefits(referralCode) {
+        await tokenMContract.methods.claimReferralBenefits(referralCode).send({
+            from: web3.eth.defaultAccount,
+        });
+        }
+
+        // Get the user's transactions
+        async function getTransactions() {
+        const transactions = await web3.eth.getTransactions(web3.eth.defaultAccount);
+        return transactions;
+        }
+
+        // Update the UI with the user's TokenM and CoinM balances
+        function updateBalances() {
+        const tokenMBalance = await getTokenMBalance();
+        document.querySelector('#tokenm-balance').textContent = tokenMBalance;
+
+        const coinMBalance = await getCoinMBalance();
+        document.querySelector('#coinm-balance').textContent = coinMBalance;
+        }
+
+        // Update the UI with the user's transactions
+        function updateTransactions() {
+        const transactions = await getTransactions();
+
+        const transactionsTable = document.querySelector('#transactions-table');
+        transactionsTable.innerHTML = '';
+
+        for (const transaction of transactions) {
+            const transactionRow = document.createElement('tr');
+
+            const typeCell = document.createElement('td');
+            typeCell.textContent = transaction.type;
+            transactionRow.appendChild(typeCell);
+
+            const amountCell = document.createElement('td');
+            amountCell.textContent = transaction.value;
+            transactionRow.appendChild(amountCell);
+
+            const dateCell = document.createElement('td');
+            dateCell.textContent = new Date(transaction.timestamp * 1000).toLocaleDateString();
+            transactionRow.appendChild(dateCell);
+
+            transactionsTable.appendChild(transactionRow);
+        }
+        }
+
+        // Connect to the Web3 provider
+        web3Provider.connect().then(() => {
+        // Update the UI with the user's TokenM and CoinM balances
+        updateBalances();
+
+        // Update the UI with the user's transactions
+        updateTransactions();
+
+        // Add event listeners for the "Purchase CoinM" and "Claim Referral Benefits" buttons
+        const purchaseCoinMButton = document.querySelector('#purchase-coinm-button');
+        purchaseCoinMButton.addEventListener('click', async () => {
+            const tokenMAmount = document.querySelector('#tokenm-amount').value;
+
+            await purchaseCoinM(tokenMAmount);
+
+            // Update the UI with the new CoinM balance
+            const coinMBalance = await getCoinMBalance();
+            document.querySelector('#coinm-balance').textContent = coinMBalance;
+        });
+
+        const claimReferralBenefitsButton = document.querySelector('#claim-referral-benefits-button');
+        claimReferralBenefitsButton.addEventListener('click', async () => {
+            const referralCode = document.querySelector('#referral-code').value;
+
+            await claimReferralBenefits(referralCode);
+
+            // Update the UI with the new TokenM balance
+            const tokenMBalance = await getTokenMBalance();
+            document.querySelector('#tokenm-balance').textContent = tokenMBalance;
+        });
+        });
+
+    </script>
+</body>
+</html>
